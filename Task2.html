@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task 2 - Contact Form and To-Do List</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+        #contactForm, #taskContainer {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 400px;
+        }
+        #contactForm label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        #contactForm input, #contactForm textarea {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #taskContainer {
+            margin-top: 40px;
+        }
+        #taskList {
+            list-style-type: none;
+            padding: 0;
+        }
+        #taskList li {
+            padding: 10px;
+            border: 1px solid #ccc;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            transition: background-color 0.3s;
+        }
+        #taskList li:hover {
+            background-color: #e9e9e9;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: gray;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .remove-button {
+            background-color: #dc3545;
+        }
+        .remove-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Contact Form</h1>
+    <form id="contactForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        
+        <label for="message">Message:</label>
+        <textarea id="message" name="message" required></textarea>
+        
+        <button type="submit">Submit</button>
+    </form>
+
+    <div id="submittedData" style="margin-top: 20px;"></div>
+
+    <div id="taskContainer">
+        <h2>To-Do List</h2>
+        <input type="text" id="taskInput" placeholder="Add a new task">
+        <button id="addButton">Add Task</button>
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        // Form validation and submission
+        document.getElementById('contactForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form submission
+            let email = document.getElementById('email').value;
+            if (!validateEmail(email)) {
+                alert('Please enter a valid email address.');
+                return; // Stop further execution
+            }
+            displaySubmittedData();
+            this.reset(); // Reset form fields
+        });
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(String(email).toLowerCase());
+        }
+
+        function displaySubmittedData() {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            const submittedDataDiv = document.getElementById('submittedData');
+            submittedDataDiv.innerHTML = `<h3> Submitted Data:</h3>
+                                           <p><strong>Name:</strong> ${name}</p>
+                                           <p><strong>Email:</strong> ${email}</p>
+                                           <p><strong>Message:</strong> ${message}</p>`;
+        }
+
+        // To-Do List functionality with local storage
+        const addButton = document.getElementById('addButton');
+        const taskInput = document.getElementById('taskInput');
+        const taskList = document.getElementById('taskList');
+
+        // Load tasks from local storage
+        loadTasks();
+
+        addButton.addEventListener('click', function() {
+            const taskText = taskInput.value;
+            if (taskText) {
+                addTask(taskText);
+                taskInput.value = ''; // Clear input
+            }
+        });
+
+        function addTask(taskText) {
+            const li = document.createElement('li');
+            li.textContent = taskText;
+
+            // Create a remove button
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.className = 'remove-button';
+            removeButton.onclick = function() {
+                taskList.removeChild(li);
+                saveTasks(); // Update local storage
+            };
+
+            // Create a complete button
+            const completeButton = document.createElement('button');
+            completeButton.textContent = 'Complete';
+            completeButton.onclick = function() {
+                li.classList.toggle('completed');
+                saveTasks(); // Update local storage
+            };
+
+            li.appendChild(completeButton);
+            li.appendChild(removeButton);
+            taskList.appendChild(li);
+            saveTasks(); // Update local storage
+        }
+
+        function saveTasks() {
+            const tasks = [];
+            const items = taskList.getElementsByTagName('li');
+            for (let item of items) {
+                tasks.push({
+                    text: item.firstChild.textContent,
+                    completed: item.classList.contains('completed')
+                });
+            }
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function loadTasks() {
+            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.textContent = task.text;
+                if (task.completed) {
+                    li.classList.add('completed');
+                }
+
+                const removeButton = document.createElement('button');
+                removeButton.textContent = 'Remove';
+                removeButton.className = 'remove-button';
+                removeButton.onclick = function() {
+                    taskList.removeChild(li);
+                    saveTasks(); // Update local storage
+                };
+
+                const completeButton = document.createElement('button');
+                completeButton.textContent = 'Complete';
+                completeButton.onclick = function() {
+                    li.classList.toggle('completed');
+                    saveTasks(); // Update local storage
+                };
+
+                li.appendChild(completeButton);
+                li.appendChild(removeButton);
+                taskList.appendChild(li);
+            });
+        }
+    </script>
+
+</body>
+</html>
